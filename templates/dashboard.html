@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Retail Dashboard</h1>
+    <table border="1">
+        <tr>
+            <th>Department</th>
+            <th>Total Spending</th>
+        </tr>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.Department }}</td>
+            <td>{{ row.Total_Spending }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
