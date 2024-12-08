@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+    <table border="1">
+        <tr>
+            <th>Hshd_num</th>
+            <th>Basket_num</th>
+            <th>Date</th>
+            <th>Product_num</th>
+            <th>Department</th>
+            <th>Commodity</th>
+        </tr>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.Hshd_num }}</td>
+            <td>{{ row.Basket_num }}</td>
+            <td>{{ row.Date }}</td>
+            <td>{{ row.Product_num }}</td>
+            <td>{{ row.Department }}</td>
+            <td>{{ row.Commodity }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
