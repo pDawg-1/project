@@ -1,13 +1,31 @@
 from flask import Flask, render_template, request
 import pandas as pd
+import zipfile
+import os
 from sqlalchemy import create_engine
 
 app = Flask(__name__)
 
-# Database connection setup
-engine = create_engine('sqlite:///retail_data.db')  # Example with SQLite
+# Database connection setup (SQLite for simplicity)
+engine = create_engine('sqlite:///retail_data.db')
 
-# Home page route
+# Helper function to load data from the zip file
+def load_zip_data(zip_path, csv_filename):
+    with zipfile.ZipFile(zip_path, 'r') as z:
+        with z.open(csv_filename) as f:
+            return pd.read_csv(f)
+
+# Preload the transactions data from the zip file
+transactions_zip = 'data/transactions.zip'
+transactions_csv = 'transactions.csv'
+
+if os.path.exists(transactions_zip):
+    transactions = load_zip_data(transactions_zip, transactions_csv)
+    transactions.to_sql('Transactions', con=engine, if_exists='replace', index=False)
+else:
+    print(f"Error: {transactions_zip} not found!")
+
+# Home page
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -20,7 +38,6 @@ def search():
         query = f"""
         SELECT Hshd_num, Basket_num, Date, Product_num, Department, Commodity
         FROM Transactions
-        JOIN Products ON Transactions.Product_num = Products.Product_num
         WHERE Hshd_num = {hshd_num}
         ORDER BY Hshd_num, Basket_num, Date, Product_num, Department, Commodity;
         """
@@ -33,16 +50,21 @@ def search():
 def upload():
     file = request.files['file']
     if file:
-        data = pd.read_csv(file)
-        data.to_sql('Transactions', con=engine, if_exists='append', index=False)
+        # Save uploaded file as a zip
+        uploaded_zip_path = 'data/uploaded_transactions.zip'
+        file.save(uploaded_zip_path)
+
+        # Extract and load data from the uploaded zip
+        uploaded_data = load_zip_data(uploaded_zip_path, 'transactions.csv')
+        uploaded_data.to_sql('Transactions', con=engine, if_exists='append', index=False)
+
         return "File uploaded and data loaded successfully!"
     return "No file uploaded."
 
-# Dashboard route
+# Dashboard
 @app.route('/dashboard')
 def dashboard():
-    # Sample query and visualization logic
-    query = "SELECT Category, SUM(Spending) as Total_Spending FROM Transactions GROUP BY Category;"
+    query = "SELECT Department, SUM(Spending) as Total_Spending FROM Transactions GROUP BY Department;"
     data = pd.read_sql(query, engine)
     return render_template('dashboard.html', data=data.to_dict(orient='records'))
 
