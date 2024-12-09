@@ -9,21 +9,37 @@ app = Flask(__name__)
 # Database connection setup (SQLite for simplicity)
 engine = create_engine('sqlite:///retail_data.db')
 
-# Helper function to load data from the zip file
+# Helper function to load data from a zip file
 def load_zip_data(zip_path, csv_filename):
     with zipfile.ZipFile(zip_path, 'r') as z:
         with z.open(csv_filename) as f:
             return pd.read_csv(f)
 
-# Preload the transactions data from the zip file
-transactions_zip = 'data/transactions.zip'
-transactions_csv = 'transactions.csv'
+# File names
+transactions_zip = 'data/400_transactions.zip'
+transactions_csv = '400_transactions.csv'
+households_csv = 'data/400_households.csv'
+products_csv = 'data/400_products.csv'
 
+# Preload the data
 if os.path.exists(transactions_zip):
+    # Load transactions from zip
     transactions = load_zip_data(transactions_zip, transactions_csv)
     transactions.to_sql('Transactions', con=engine, if_exists='replace', index=False)
 else:
     print(f"Error: {transactions_zip} not found!")
+
+if os.path.exists(households_csv):
+    households = pd.read_csv(households_csv)
+    households.to_sql('Households', con=engine, if_exists='replace', index=False)
+else:
+    print(f"Error: {households_csv} not found!")
+
+if os.path.exists(products_csv):
+    products = pd.read_csv(products_csv)
+    products.to_sql('Products', con=engine, if_exists='replace', index=False)
+else:
+    print(f"Error: {products_csv} not found!")
 
 # Home page
 @app.route('/')
@@ -55,8 +71,8 @@ def upload():
         file.save(uploaded_zip_path)
 
         # Extract and load data from the uploaded zip
-        uploaded_data = load_zip_data(uploaded_zip_path, 'transactions.csv')
-        uploaded_data.to_sql('Transactions', con=engine, if_exists='append', index=False)
+        uploaded_transactions = load_zip_data(uploaded_zip_path, transactions_csv)
+        uploaded_transactions.to_sql('Transactions', con=engine, if_exists='append', index=False)
 
         return "File uploaded and data loaded successfully!"
     return "No file uploaded."
